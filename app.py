@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from ml import show_ai_prediction_center
 
 from loader import load_data
 from stats import clean_data, basic_stats, dataset_info
@@ -44,7 +45,8 @@ page = st.sidebar.selectbox(
         "Basic Cleaning",
         "Charts and Visualizations",
         "EDA",
-        "Deep Dive Analysis"
+        "Deep Dive Analysis",
+        "AI Prediction Center"
     ]
 )
 
@@ -142,134 +144,166 @@ elif page == "EDA":
     )
 
     if st.session_state.df is not None:
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+         "Data Quality",
+        "Missing Values",
+        "Unique Values",
+        "Distribution",
+        "Categorical",
+        "Heatmap",
+        "Outliers"
+        ])
 
         # Data Quality Report
-        st.subheader("Data Quality Report")
+        with tab1:
 
-        quality_df = data_quality_report(
+            st.subheader("Data Quality Report")
+
+            st.caption(
+                 "Shows data type, missing values, duplicates and unique values."
+                )
+
+            quality_df = data_quality_report(
             st.session_state.df
-        )
-
-        st.dataframe(
-            quality_df,
-            use_container_width=True
-        )
-
-        # Missing Values Analysis
-        st.subheader("Missing Values Analysis")
-
-        missing_df = missing_value_summary(
-            st.session_state.df
-        )
-
-        st.dataframe(
-            missing_df,
-            use_container_width=True
-        )
-
-        # Unique Values Analysis
-        st.subheader("Unique Values Analysis")
-
-        unique_df = unique_value_summary(
-            st.session_state.df
-        )
-
-        st.dataframe(
-            unique_df,
-            use_container_width=True
-        )
-
-        # Distribution Summary
-        st.subheader("Distribution Summary")
-
-        dist_df = distribution_summary(
-            st.session_state.df
-        )
-
-        if len(dist_df) > 0:
+                )
 
             st.dataframe(
-                dist_df,
+                quality_df,
                 use_container_width=True
-            )
+                )
+            
+        # Missing Values Analysis
+        with tab2:
 
-        else:
+            st.subheader("Missing Values Analysis")
 
-            st.info(
-                "No valid numeric columns available for distribution analysis."
-            )
+            st.caption(
+                "Identifies missing records and their percentage."
+                 )
+
+            missing_df = missing_value_summary(
+                st.session_state.df
+                 )
+
+            st.dataframe(
+                 missing_df,
+                 use_container_width=True
+                 )
+
+        # Unique Values Analysis
+        with tab3:
+
+            st.subheader("Unique Values Analysis")
+
+            st.caption(
+                 "Shows distinct values in each column."
+                 )
+
+            unique_df = unique_value_summary(
+                 st.session_state.df
+                 )
+
+            st.dataframe(
+                 unique_df,
+                 use_container_width=True
+                 )
+
+        # Distribution Summary
+        with tab4:
+
+            st.subheader("Distribution Summary")
+
+            st.caption(
+                "Shows skewness and kurtosis of numerical variables."
+                 )
+
+            dist_df = distribution_summary(
+                st.session_state.df
+                 )
+
+            if len(dist_df) > 0:
+
+                 st.dataframe(
+                    dist_df,
+                    use_container_width=True
+                     )
+
+            else:
+
+                st.info(
+                    "No valid numeric columns available."
+                     )
 
         # Categorical Summary
-        st.subheader("Categorical Data Summary")
+        with tab5:
 
-        cat_summary = categorical_summary(
-            st.session_state.df
-        )
+             st.subheader("Categorical Data Summary")
 
-        if len(cat_summary) > 0:
+             st.caption(
+                 "Shows frequency distribution of categorical columns."
+                 )
 
-            for col, table in cat_summary.items():
+             cat_summary = categorical_summary(
+                st.session_state.df
+                 )
 
-                st.write(f"### {col}")
+             if len(cat_summary) > 0:
 
-                st.dataframe(
-                    table,
-                    use_container_width=True
-                )
+                for col, table in cat_summary.items():
 
-                st.bar_chart(
-                    table.set_index(col)
-                )
+                    st.write(f"### {col}")
 
-        else:
+                    st.dataframe(
+                        table,
+                        use_container_width=True
+                     )
 
-            st.info(
-                "No categorical columns found in the dataset."
-            )
+                    st.bar_chart(
+                         table.set_index(col)
+                     )
+
+             else:
+
+                st.info(
+                    "No categorical columns found."
+                     )
 
         # Heatmap
-        st.subheader("Correlation Heatmap")
+        with tab6:
 
-        if st.button(
-            "Show Heatmap",
-            key="heatmap_btn"
-        ):
-            st.session_state.show_heatmap = (
-                not st.session_state.show_heatmap
-            )
+            st.subheader("Correlation Heatmap")
 
-        if st.session_state.show_heatmap:
-
+            st.caption(
+                 "Visualizes relationships between numerical variables."
+                 )
+            
             fig, error = get_heatmap_figure(
-                st.session_state.df
+                 st.session_state.df
             )
 
             if error:
 
-                st.error(error)
+                 st.error(error)
 
             else:
 
-                st.plotly_chart(
+                 st.plotly_chart(
                     fig,
                     use_container_width=True
-                )
+             )
 
         # Outlier Detection
-        st.subheader(
-            "Outlier Detection (IQR Method)"
-        )
+        with tab7:
 
-        if st.button(
-            "Detect Outliers (IQR)",
-            key="outliers_btn"
-        ):
-            st.session_state.show_outliers = (
-                not st.session_state.show_outliers
+            st.subheader(
+                "Outlier Detection (IQR Method)"
             )
 
-        if st.session_state.show_outliers:
+            st.caption(
+                 "Detects unusual values using the Interquartile Range method."
+                 )
 
+            
             outliers = detect_outliers_iqr(
                 st.session_state.df
             )
@@ -291,10 +325,6 @@ elif page == "EDA":
                     )
                 })
 
-            st.write(
-                "**Outlier Summary Table:**"
-            )
-
             summary_df = pd.DataFrame(
                 outlier_summary
             )
@@ -304,43 +334,8 @@ elif page == "EDA":
                 use_container_width=True,
                 hide_index=True
             )
-
-            st.write(
-                "**Detailed Outlier Values:**"
-            )
-
-            for col, info in outliers.items():
-
-                with st.expander(
-                    f"📊 {col} ({info['count']} outliers)"
-                ):
-
-                    if info["count"] > 0:
-
-                        outlier_data = pd.DataFrame({
-                            "Outlier Values":
-                            info["outlier_values"]
-                        })
-
-                        st.dataframe(
-                            outlier_data,
-                            use_container_width=True,
-                            hide_index=True
-                        )
-
-                    else:
-
-                        st.info(
-                            "No outliers detected in this column"
-                        )
-
-    else:
-
-        st.write(
-            "Please upload data first on the Basic Analysis page"
-        )
-
-
+        
+                  
 # ---------------------------------------------------
 # DEEP DIVE ANALYSIS
 # ---------------------------------------------------
@@ -365,3 +360,14 @@ elif page == "Deep Dive Analysis":
             "Please upload data first on the Basic Analysis page"
         )
 
+elif page == "AI Prediction Center":
+
+    if st.session_state.df_cleaned is None:
+
+        st.warning(
+            "Please run Basic Cleaning first."
+        )
+
+    else:
+
+        show_ai_prediction_center(st.session_state.df_cleaned)
